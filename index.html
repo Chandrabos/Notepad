@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Idea.world!</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1BC8F1;
+            margin: 1;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .output-box {
+            margin-top: 5px;
+        }
+
+        .comment {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            position: relative; /* For positioning the like and delete buttons */
+            background-color: #6AFFD5;
+        }
+
+        .delete-button {
+            position: absolute;
+            top: 1px;
+            right: 10px;
+            cursor: pointer;
+            color: #FF0000;
+            
+        }
+
+        /* Add styling for input and textarea */
+        label, input, textarea {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #1B90CB;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        /* Customize label colors */
+        label {
+            color: #333;
+        }
+
+        /* Style the submit button */
+        input[type="submit"] {
+            background-color: #0074D9;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style the like button */
+        .like-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .liked {
+            color: red;
+        }
+
+        /* Style for the like count */
+        .like-count {
+            position: absolute;
+            top: 10px;
+            right: 40px;
+        }
+
+        /* Add glow effect on hover for input and textarea */
+        label:hover, input:hover, textarea:hover {
+            box-shadow: 0 0 10px rgba(0, 0, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome</h1>
+        <form id="idea-form">
+            <label for="name"> Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="idea"> Idea:</label>
+            <textarea id="idea" name="idea" rows="4" required></textarea>
+            <input type="submit" value="Submit">
+        </form>
+        <h2>View:</h2>
+        <div class="output-box" id="output"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById("idea-form");
+        const outputBox = document.getElementById("output");
+
+        function toggleLike(button, countElement) {
+            button.classList.toggle("liked");
+            if (button.classList.contains("liked")) {
+                countElement.textContent = parseInt(countElement.textContent) + 1;
+            } else {
+                countElement.textContent = parseInt(countElement.textContent) - 1;
+            }
+        }
+
+        function deleteComment(commentElement, deletedComment) {
+            commentElement.remove();
+
+            const existingComments = JSON.parse(localStorage.getItem("comments")) || [];
+            const updatedComments = existingComments.filter(comment => JSON.stringify(comment) !== JSON.stringify(deletedComment));
+            localStorage.setItem("comments", JSON.stringify(updatedComments));
+        }
+
+        function createDeleteButton(commentElement, deletedComment) {
+            const deleteButton = document.createElement("span");
+            deleteButton.classList.add("delete-button");
+            deleteButton.textContent = "Delete";
+
+            deleteButton.addEventListener("click", function () {
+                deleteComment(commentElement, deletedComment);
+            });
+
+            return deleteButton;
+        }
+
+        function createCommentElement(name, idea) {
+            const comment = document.createElement("div");
+            comment.classList.add("comment");
+
+            const likeButton = document.createElement("span");
+            likeButton.classList.add("like-button");
+            likeButton.textContent = "";
+
+            const likeCount = document.createElement("span");
+            likeCount.classList.add("like-count");
+            likeCount.textContent = "";
+
+            likeButton.addEventListener("click", function () {
+                toggleLike(likeButton, likeCount);
+            });
+
+            const commentContent = document.createElement("p");
+            commentContent.innerHTML = `<strong>${name}:</strong> ${idea}`;
+
+            const deleteButton = createDeleteButton(comment, { name, idea });
+
+            comment.appendChild(likeButton);
+            comment.appendChild(likeCount);
+            comment.appendChild(deleteButton);
+            comment.appendChild(commentContent);
+
+            return comment;
+        }
+
+        window.addEventListener("load", function () {
+            const storedComments = JSON.parse(localStorage.getItem("comments")) || [];
+            storedComments.forEach(comment => {
+                outputBox.appendChild(createCommentElement(comment.name, comment.idea));
+            });
+        });
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById("name").value;
+            const idea = document.getElementById("idea").value;
+
+            const commentElement = createCommentElement(name, idea);
+            outputBox.insertBefore(commentElement, outputBox.firstChild);
+
+            document.getElementById("name").value = "";
+            document.getElementById("idea").value = "";
+
+            const existingComments = JSON.parse(localStorage.getItem("comments")) || [];
+            const newComments = [{ name, idea }, ...existingComments];
+            localStorage.setItem("comments", JSON.stringify(newComments));
+        });
+    </script>
+</body>
+</html>
